@@ -88,5 +88,38 @@ namespace txtCutter.Enums
             }
             return ret;
         }
+
+        /// <summary>
+        /// 根据分割模式和输入内容来获取示例名
+        /// </summary>
+        /// <param name="cutType"></param>
+        /// <param name="fileName">无后缀名的文件名</param>
+        /// <param name="index">索引</param>
+        /// <param name="elseValue">其他内容</param>
+        /// <returns></returns>
+        public static string GetFileName(this CutType cutType,string fileName,int index,string elseValue)
+        {
+            var ret = "";
+            switch (cutType)
+            {
+                case CutType.Index_File:
+                    ret = $"{index}_{fileName}.txt";
+                    break;
+                case CutType.File_Index_Else:
+                    ret = $"{fileName}_{index}_{elseValue}.txt";
+                    break;
+                case CutType.Else_Index:
+                    ret = $"{elseValue}_{index}.txt";
+                    break;
+                case CutType.Index_Else:
+                    ret = $"{index}_{elseValue}.txt";
+                    break;
+                case CutType.File_Index:
+                default:
+                    ret = $"{fileName}_{index}.txt";
+                    break;
+            }
+            return ret;
+        }
     }
 }
