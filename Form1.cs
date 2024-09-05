@@ -285,6 +285,7 @@ namespace txtCutter
                 return;
             }
 
+            var partNumber = Math.Ceiling((double)file.Length / partSize);
             using (var stream = File.OpenRead(textBox1.Text))
             {
                 int fileIndex = 0;
@@ -292,7 +293,7 @@ namespace txtCutter
                 {
                     fileIndex++;
                     var content = ReadNextPart.ReadNextPart5(stream, partSize, Encoding.UTF8, out int actualBytesRead);
-                    var newFileName = cutType.GetFileName(textBox3.Text, fileIndex, textBox4.Text);
+                    var newFileName = cutType.GetFileName(textBox3.Text, fileIndex, textBox4.Text, partNumber.ToString().Length);
 
                     // 只写入实际读取的字节数
                     File.WriteAllText(Path.Combine(textBox2.Text, newFileName), content, Encoding.UTF8);
