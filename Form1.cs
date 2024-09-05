@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using txtCutter.Heplper;
 using txtCutter.Enums;
+using txtCutter.Properties;
 
 using SizeType = txtCutter.Enums.SizeType;
+using txtCutter.Helper;
 
 namespace txtCutter
 {
@@ -27,6 +29,9 @@ namespace txtCutter
             InitializeComponent();
             comboBox1.DataSource = Enum.GetValues(typeof(CutType));
             comboBox2.DataSource = Enum.GetValues(typeof(SizeType));
+
+            // 设置ICON
+            Icon = Resources.favicon;
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -77,7 +82,8 @@ namespace txtCutter
 
         private void button2_Click(object sender, EventArgs e)
         {
-            Item.ChoiceFolder(textBox2, "选择输出文件夹", textBox2.Text);
+            //Item.ChoiceFolder(textBox2, "选择输出文件夹", textBox2.Text);
+            Item.ChoiceFolder(textBox2, "选择输出文件夹", textBox2.Text, true);
             toolTip1.SetToolTip(textBox2, textBox2.Text);
         }
 
@@ -285,7 +291,7 @@ namespace txtCutter
                 while (stream.Position < stream.Length)
                 {
                     fileIndex++;
-                    var content = ReadNextPart(stream, partSize, Encoding.UTF8, out int actualBytesRead);
+                    var content = ReadNextPart.ReadNextPart5(stream, partSize, Encoding.UTF8, out int actualBytesRead);
                     var newFileName = cutType.GetFileName(textBox3.Text, fileIndex, textBox4.Text);
 
                     // 只写入实际读取的字节数
@@ -294,63 +300,6 @@ namespace txtCutter
             }
 
             MessageBox.Show("分割完成!", "", MessageBoxButtons.OK);
-        }
-
-        /// <summary>
-        /// 从文件流中读取指定大小的数据，同时尽量保证不在字符的中间断开。
-        /// 此方法读取大约 partSize 字节的数据。如果最后一个字节是多字节字符的一部分，
-        /// 它会回退到这个字符的开始，以保证字符的完整性。这对于UTF-8编码的文本尤为重要，
-        /// 因为UTF-8的字符可能由多个字节组成。
-        /// </summary>
-        /// <param name="stream">文件流对象，用于从文件中读取数据。</param>
-        /// <param name="partSize">希望读取的数据大小（字节）。</param>
-        /// <param name="encoding">文件的编码方式，用于确定如何解释字节数据。</param>
-        /// <param name="actualBytesRead">输出参数，返回从文件中实际读取的字节总数。这有助于处理最后一个文件块，其大小可能小于 partSize。</param>
-        /// <returns>字符串，包含从文件中读取的数据。</returns>
-        private string ReadNextPart(FileStream stream, int partSize, Encoding encoding, out int actualBytesRead)
-        {
-            byte[] buffer = new byte[partSize];
-            actualBytesRead = stream.Read(buffer, 0, buffer.Length);
-
-            // 如果读取的字节数小于缓冲区大小，直接返回读取的内容
-            if (actualBytesRead < buffer.Length)
-            {
-                return encoding.GetString(buffer, 0, actualBytesRead);
-            }
-
-            // 为多字节字符边界处理提供一些额外空间
-            int lastByteIndex = actualBytesRead;
-            if (!encoding.IsSingleByte)
-            {
-                while (lastByteIndex > 0 && !IsCharStart(buffer[lastByteIndex - 1]))
-                {
-                    lastByteIndex--;
-                }
-
-                // 确保不在字符中间断开
-                if (lastByteIndex == 0)
-                {
-                    lastByteIndex = actualBytesRead; // 如果找不到安全的断点，保留整个缓冲区
-                }
-            }
-
-            // 重新定位流位置
-            stream.Position -= (actualBytesRead - lastByteIndex);
-
-            return encoding.GetString(buffer, 0, lastByteIndex);
-        }
-
-        /// <summary>
-        /// 判断给定的字节是否为字符的开始。此方法主要用于UTF-8编码的情况。
-        /// 在UTF-8中，一个字符可能由多个字节组成。ASCII字符（0-127）以及多字节序列的第一个字节都不会以二进制 10 开头。
-        /// 该方法用于确定是否可以在当前字节处分割字符串，而不破坏字符的完整性。
-        /// </summary>
-        /// <param name="b">要检查的字节。</param>
-        /// <returns>如果字节是字符的起始部分，则为true；否则为false。</returns>
-        private bool IsCharStart(byte b)
-        {
-            // 对于UTF-8，所有ASCII字符和多字节序列的开始字节都会满足此条件
-            return (b & 0xC0) != 0x80;
         }
     }
 }
